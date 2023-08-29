@@ -1,0 +1,11 @@
+# Dependencies
+bs4
+dash
+pandas
+requests
+tqdm
+
+# Dev dependencies
+black
+docdocdoc
+importchecker

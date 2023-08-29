@@ -1,0 +1,21 @@
+[build-system]
+requires = ["black", "docdocdoc", "setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shelf_control"
+version = "0.1.0"
+license = "MIT"
+authors = [
+  { name="Laura Miguel", email="miguellaura240@gmail.com" },
+]
+description = "Booknode scraper and analyser"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "bs4",
+  "dash",
+  "pandas",
+  "requests",
+  "tqdm"
+]
