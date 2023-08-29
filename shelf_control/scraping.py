@@ -2,7 +2,6 @@
 # Scraper for top 1000
 # =============================================================================
 #
-
 import csv
 import re
 from time import sleep
@@ -11,28 +10,10 @@ from bs4 import BeautifulSoup
 import requests
 from tqdm import tqdm
 
+from shelf_control.constants import BOOK_TOP_1000_FIELDNAMES, CATEGORIES_NAMES
 
 BASE_URL = "https://booknode.com"
-BOOK_FIELDNAMES = [
-    "title",
-    "cover",
-    "authors",
-    "price",
-    "notes_count",
-    "resume",
-    "categories_count",
-    "readers_count",
-    "themes",
-    "themes_url",
-    "dates",
-    "dates_country",
-    "editors",
-    "editors_url",
-    "collections",
-    "collections_url",
-]
-
-NOTES_RE = re.compile(r"Noté \d{0,2}\/10 par (\d+) Booknautes")
+NOTES_RE = re.compile(r"Noté \d{0,2}\/10 par (\d+) Booknautes?")
 DATES_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
@@ -53,6 +34,7 @@ def scraper_top_1000(page_nb=1):
         # print('status_code :', r.status_code)
         soup_books = BeautifulSoup(res_books.text, "html.parser")
         books = soup_books.find_all("div", class_="row book")
+        position = 1
 
         for book in tqdm(
             books,
@@ -63,6 +45,8 @@ def scraper_top_1000(page_nb=1):
         ):
             url_book = book.find("a", class_="main_cover_link").get("href")
             result = scraper_specific_book(url_book)
+            result["position"] = position
+            position += 1
             yield result
 
         sleep(0.5)
@@ -82,7 +66,10 @@ def scraper_specific_book(url_book):
     if res_book.status_code > 400 and res_book.status_code < 600:
         print("status_code :", res_book.status_code)
     soup_book = BeautifulSoup(res_book.text, "html.parser")
+
     result = {}
+
+    result["book_url"] = url_book
 
     result["title"] = soup_book.find("h1", itemprop="name").text
 
@@ -97,6 +84,11 @@ def scraper_specific_book(url_book):
         for author in soup_book.find_all("li", itemprop="author")
     ]
     result["authors"] = "|".join(authors_list)
+    authors_url_list = [
+        author.find("a").get("href")
+        for author in soup_book.find_all("li", itemprop="author")
+    ]
+    result["authors_url"] = "|".join(authors_url_list)
 
     result["price"] = (
         soup_book.find("span", class_="price").text.replace(" €", "")
@@ -108,11 +100,11 @@ def scraper_specific_book(url_book):
     # For example, if the list is
     # ['1', '3', '5', '6', '17', '46', '2', '5', '65', '56']
     # 1 person graded it 1/10, 3 graded it 2/10, etc.
-    result["notes_count"] = "|".join(
-        NOTES_RE.findall(
-            soup_book.find("span", class_="detail-global-rating").get("data-content")
-        )
+    notes = NOTES_RE.findall(
+        soup_book.find("span", class_="detail-global-rating").get("data-content")
     )
+    for note in range(10):
+        result["count_note_%s" % (note + 1)] = notes[note] if notes else 0
 
     resume_block = soup_book.find("span", class_="actual-text")
     if resume_block:
@@ -123,12 +115,13 @@ def scraper_specific_book(url_book):
     # For example, if the list is
     # ['2396', '1267', '648', '377', '652', '179', '158', '4449', '1833']
     # 2396 person put it in the Diamant category, 1267 put it in the Or category, etc.
-    nb_categories_list = [
+    categories_count_list = [
         readers.text[:-9].replace(" ", "")
         for readers in soup_book.find_all("div", class_="readercount")
     ]
-    result["categories_count"] = "|".join(nb_categories_list)
-    result["readers_count"] = sum(int(nb) for nb in nb_categories_list[:-2])
+    for nb, category in enumerate(CATEGORIES_NAMES):
+        result[category] = categories_count_list[nb]
+    result["readers_count"] = sum(int(nb) for nb in categories_count_list[:-2])
 
     themes_block = soup_book.find("div", class_="col-sm-12 hidden-xs").find(
         "div", class_="panel-body"
@@ -142,11 +135,13 @@ def scraper_specific_book(url_book):
     dates_block = soup_book.find_all("div", class_="fm-right-box fm-side-col")
     if len(dates_block) >= 3:
         dates_block = [date.text for date in dates_block[2].find_all("li")]
-        result["dates"] = [DATES_RE.search(date).group(0) for date in dates_block]
+        dates_list = [DATES_RE.search(date).group(0) for date in dates_block]
+        result["dates"] = "|".join(dates_list)
         # Info on country and format
-        result["dates_country"] = [
+        dates_country_list = [
             " ".join(DATES_RE.sub("", country).split()) for country in dates_block
         ]
+        result["dates_country"] = "|".join(dates_country_list)
 
     editors_collections_block = soup_book.find("h3", string="Editeurs")
     if editors_collections_block:
@@ -194,7 +189,7 @@ def scraper_specific_book(url_book):
 if __name__ == "__main__":
     # print(scraper_specific_book('https://booknode.com/mens_moi_jusquau_bout_du_monde_03431561'))
     with open("data/top_1000.csv", "w") as f:
-        fieldnames = BOOK_FIELDNAMES
+        fieldnames = BOOK_TOP_1000_FIELDNAMES
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for result in scraper_top_1000():

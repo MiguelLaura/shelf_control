@@ -1,3 +1,7 @@
+# =============================================================================
+# Script to generate README
+# =============================================================================
+#
 from shelf_control.scraping import scraper_specific_book, scraper_top_1000
 from docdocdoc.build import generate_readme
 
