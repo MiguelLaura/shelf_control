@@ -73,6 +73,7 @@ And open [localhost:8050](http://localhost:8050) in a web browser.
 * Build an interface to use the scraping commands
 * Add tests when usefull
 * Check how to properly stop dash
+* Put dataframe transformations into function (more generally, simplify code by making smaller steps)
 
 ## Usage
 

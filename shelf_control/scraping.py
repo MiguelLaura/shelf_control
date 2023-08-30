@@ -28,13 +28,13 @@ def scraper_top_1000(page_nb=1):
         dict: books data
     """
     top_1000_url = BASE_URL + "/decouverte/top-1000-booknode?page="
+    position = 1
     for page in tqdm(range(page_nb, 11), desc=" number of pages", position=0):
         url_books = top_1000_url + str(page)
         res_books = requests.get(url_books)
         # print('status_code :', r.status_code)
         soup_books = BeautifulSoup(res_books.text, "html.parser")
         books = soup_books.find_all("div", class_="row book")
-        position = 1
 
         for book in tqdm(
             books,
