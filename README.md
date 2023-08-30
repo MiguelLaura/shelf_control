@@ -2,13 +2,26 @@
 
 Booknode scraper and analyser (my playground to try things).
 
-## Installing, contributioning and using
+## Installing, using and contributing
 
 ### Installing
 ```bash
 git clone https://github.com/MiguelLaura/shelf_control.git
 make deps
 ```
+
+### Using
+
+To scrape the top_1000:
+```bash
+python -m shelf_control.scraping
+```
+
+To use the dashboard:
+```bash
+python -m shelf_control.dashboard
+```
+And open [localhost:8050](http://localhost:8050) in a web browser.
 
 ### Contributing
 
@@ -36,24 +49,11 @@ Once the changes are done, to lint, format and generate the [README.md](README.m
 make
 ```
 
-### Using
-
-To scrape the top_1000:
-```bash
-python -m shelf_control.scraping
-```
-
-To use the dashboard:
-```bash
-python -m shelf_control.dashboard
-```
-And open [localhost:8050](http://localhost:8050) in a web browser.
-
 ## Ideas of things to do
 
 * Scraping data from [Booknode](https://booknode.com)
     * Top 1000 ✓
-        * Time: 29min23s
+        * Time: 17min51s
         * Memory: 1,8M
     * Specific book (✓)
     * Editor
@@ -71,10 +71,11 @@ And open [localhost:8050](http://localhost:8050) in a web browser.
 
 * Use the progress bar from `minet`
 * Build an interface to use the scraping commands
-* Add tests when usefull
+* Add tests when useful
 * Check how to properly stop dash
-* Put dataframe transformations into function (more generally, simplify code by making smaller steps)
-
+* Dataframe transformations
+    * Into functions (more generally, simplify code by making smaller steps)
+    * Add corresponding test + CI
 ## Usage
 
 * [scraping](#scraping)
