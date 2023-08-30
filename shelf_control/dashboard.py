@@ -9,32 +9,60 @@ import plotly.express as px
 
 from shelf_control.constants import BOOK_TOP_1000_COLUMNS_DASHBOARD
 
-df = pd.read_csv("data/top_1000.csv")
+df_initial = pd.read_csv("data/top_1000.csv")
+df_dashtable = pd.DataFrame(df_initial)
 
-df["initial_cover"] = df["cover"]
-df["initial_title"] = df["title"]
-df["cover"] = "[![" + df["title"] + "](" + df["cover"] + ")](" + df["cover"] + ")"
-df["title"] = "[" + df["title"] + "](" + df["book_url"] + ")"
-df.drop("book_url", axis=1, inplace=True)
+df_dashtable["initial_cover"] = df_dashtable["cover"]
+df_dashtable["initial_title"] = df_dashtable["title"]
+df_dashtable["cover"] = (
+    "[!["
+    + df_dashtable["title"]
+    + "]("
+    + df_dashtable["cover"]
+    + ")]("
+    + df_dashtable["cover"]
+    + ")"
+)
+df_dashtable["title"] = (
+    "[" + df_dashtable["title"] + "](" + df_dashtable["book_url"] + ")"
+)
+df_dashtable.drop("book_url", axis=1, inplace=True)
 
-df["dates"] = df["dates"].str.replace("|", "\n\n")
-df["dates_country"] = df["dates_country"].str.replace("|", "\n\n")
+df_dashtable["dates"] = df_dashtable["dates"].str.replace("|", "\n\n")
+df_dashtable["dates_country"] = df_dashtable["dates_country"].str.replace("|", "\n\n")
 
 for elements in ["themes", "authors", "editors", "collections"]:
-    df[elements] = df[elements].apply(lambda x: str(x).split("|"))
-    df["initial_" + elements] = df[elements].apply(lambda x: "\n\n".join(x))
-    df[elements + "_url"] = df[elements + "_url"].apply(lambda x: str(x).split("|"))
-    df[elements] = df.apply(
+    df_dashtable[elements] = df_dashtable[elements].apply(lambda x: str(x).split("|"))
+    df_dashtable["initial_" + elements] = df_dashtable[elements].apply(
+        lambda x: "\n\n".join(x)
+    )
+    df_dashtable[elements + "_url"] = df_dashtable[elements + "_url"].apply(
+        lambda x: str(x).split("|")
+    )
+    df_dashtable[elements] = df_dashtable.apply(
         lambda x: [
             "[" + element + "](" + element_url + ")"
             for element, element_url in zip(x[elements], x[elements + "_url"])
         ],
         axis=1,
     )
-    df[elements] = df[elements].apply(lambda x: "\n\n".join(x))
-    df.drop(elements + "_url", axis=1, inplace=True)
+    df_dashtable[elements] = df_dashtable[elements].apply(lambda x: "\n\n".join(x))
+    df_dashtable.drop(elements + "_url", axis=1, inplace=True)
 
-df_sorted_price = df.sort_values(by="price")
+df_explode_dates = pd.DataFrame(df_initial)
+df_explode_dates["dates"] = df_explode_dates["dates"].apply(lambda x: str(x).split("|"))
+df_explode_dates["dates_country"] = df_explode_dates["dates_country"].apply(
+    lambda x: str(x).split("|")
+)
+df_explode_dates = df_explode_dates.explode(["dates", "dates_country"])
+
+df_explode_themes = pd.DataFrame(df_initial)
+df_explode_themes["themes"] = df_explode_themes["themes"].apply(
+    lambda x: str(x).split("|")
+)
+df_explode_themes = df_explode_themes.explode("themes")
+
+df_sorted_price = df_initial.sort_values(by="price")
 
 external_stylesheets = [
     {
@@ -66,7 +94,7 @@ app.layout = html.Div(
                 [
                     dash_table.DataTable(
                         id="table",
-                        data=df.to_dict("records"),
+                        data=df_dashtable.to_dict("records"),
                         columns=BOOK_TOP_1000_COLUMNS_DASHBOARD,
                         fixed_rows={"headers": True},
                         page_size=10,
@@ -120,7 +148,7 @@ app.layout = html.Div(
                                     "collections_url",
                                 ]
                             }
-                            for row in df.to_dict("records")
+                            for row in df_dashtable.to_dict("records")
                         ],
                         tooltip_duration=None,
                     ),
@@ -132,11 +160,17 @@ app.layout = html.Div(
         html.Div(
             children=[
                 html.Div(
-                    dcc.Graph(
+                    children=dcc.Graph(
                         figure=px.histogram(
-                            df, x="initial_authors", y="readers_count", histfunc="avg"
-                        )
-                    )
+                            df_explode_themes.groupby("themes")["readers_count"]
+                            .sum()
+                            .reset_index()
+                            .sort_values(by="readers_count", ascending=False)[:10],
+                            x="themes",
+                            y="readers_count",
+                        ),
+                    ),
+                    className="card",
                 ),
                 html.Div(
                     children=dcc.Graph(
@@ -177,10 +211,10 @@ def update_graphs(active_cell):
     if active_cell:
         column = (
             "initial_" + active_cell["column_id"]
-            if "initial_" + active_cell["column_id"] in df.columns
+            if "initial_" + active_cell["column_id"] in df_dashtable.columns
             else active_cell["column_id"]
         )
-        return df[active_cell["row"] : active_cell["row"] + 1][column]
+        return df_dashtable[active_cell["row"] : active_cell["row"] + 1][column]
     else:
         return "Click the table"
 
