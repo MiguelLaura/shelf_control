@@ -2,7 +2,8 @@
 # Dashboard for top 1000
 # =============================================================================
 #
-from dash import Dash, dash_table, dcc, html
+from dash import Dash, Input, Output, callback, dash_table, dcc, html
+import dash_bootstrap_components as dbc
 import pandas as pd
 
 from shelf_control.constants import BOOK_TOP_1000_COLUMNS_DASHBOARD
@@ -57,65 +58,70 @@ app.layout = html.Div(
             className="header",
         ),
         html.Div(
-            children=dash_table.DataTable(
-                id="table",
-                data=df.to_dict("records"),
-                columns=BOOK_TOP_1000_COLUMNS_DASHBOARD,
-                fixed_rows={"headers": True},
-                page_size=10,
-                css=[
-                    {
-                        "selector": ".dash-spreadsheet td div",
-                        "rule": """
-                            display: block;
-                            overflow-y: hidden;
-                        """,
-                    }
-                ],
-                style_cell={
-                    "textAlign": "center",
-                    "minWidth": 175,
-                    "maxWidth": 300,
-                    "font-size": "14px",
-                    "margin-top": "245px",
-                },
-                style_data={
-                    "whiteSpace": "normal",
-                    "height": "220px",
-                    "lineHeight": "15px",
-                },
-                style_data_conditional=[
-                    {
-                        "if": {
-                            "column_id": "resume",
+            children=dbc.Container(
+                [
+                    dash_table.DataTable(
+                        id="table",
+                        data=df.to_dict("records"),
+                        columns=BOOK_TOP_1000_COLUMNS_DASHBOARD,
+                        fixed_rows={"headers": True},
+                        page_size=10,
+                        css=[
+                            {
+                                "selector": ".dash-spreadsheet td div",
+                                "rule": """
+                                display: block;
+                                overflow-y: hidden;
+                            """,
+                            }
+                        ],
+                        style_cell={
+                            "textAlign": "center",
+                            "minWidth": 175,
+                            "maxWidth": 300,
+                            "font-size": "14px",
+                            "margin-top": "245px",
                         },
-                        "textAlign": "left",
-                    },
-                ],
-                style_header={
-                    "textAlign": "center",
-                    "font-weight": "bold",
-                    "font-size": "14px",
-                },
-                style_table={
-                    "overflowY": "auto",
-                },
-                tooltip_data=[
-                    {
-                        column: {"value": str(value), "type": "markdown"}
-                        for column, value in row.items()
-                        if column
-                        in [
-                            "resume",
-                            "editors",
-                            "editors_url",
-                            "collections",
-                            "collections_url",
-                        ]
-                    }
-                    for row in df.to_dict("records")
-                ],
-                tooltip_duration=None,
+                        style_data={
+                            "whiteSpace": "normal",
+                            "height": "220px",
+                            "lineHeight": "15px",
+                        },
+                        style_data_conditional=[
+                            {
+                                "if": {
+                                    "column_id": "resume",
+                                },
+                                "textAlign": "left",
+                            },
+                        ],
+                        style_header={
+                            "textAlign": "center",
+                            "font-weight": "bold",
+                            "font-size": "14px",
+                        },
+                        style_table={
+                            "overflowY": "auto",
+                        },
+                        tooltip_data=[
+                            {
+                                column: {"value": str(value), "type": "markdown"}
+                                for column, value in row.items()
+                                if column
+                                in [
+                                    "resume",
+                                    "editors",
+                                    "editors_url",
+                                    "collections",
+                                    "collections_url",
+                                ]
+                            }
+                            for row in df.to_dict("records")
+                        ],
+                        tooltip_duration=None,
+                    ),
+                    dbc.Alert(id="table_out"),
+                ]
             ),
             className="spreadsheet",
         ),
@@ -153,6 +159,16 @@ app.layout = html.Div(
         ),
     ]
 )
+
+
+@callback(Output("table_out", "children"), Input("table", "active_cell"))
+def update_graphs(active_cell):
+    return (
+        df[active_cell["row"] : active_cell["row"] + 1][active_cell["column_id"]]
+        if active_cell
+        else "Click the table"
+    )
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)

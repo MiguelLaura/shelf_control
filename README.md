@@ -62,7 +62,7 @@ And open [localhost:8050](http://localhost:8050) in a web browser.
 * Analysing the data
     * Build a [dashboard](http://localhost:8050) (work in progress)
         * [Tutorial from realpython](https://realpython.com/python-dash/#deploy-your-dash-application-to-pythonanywhere)
-        * [Tutorial from dash.plotly](https://dash.plotly.com/tutorial)
+        * [Tutorials from dash.plotly](https://dash.plotly.com/tutorial)
 * Use machine learning to determine the themes of each resume (unsupervised and supervised learning possible)
 * Build a recommandation system
 * Output a graph of the books using the themes
