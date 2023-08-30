@@ -40,12 +40,12 @@ make
 
 To scrape the top_1000:
 ```bash
-python shelf_books/scraping.py
+python -m shelf_control.scraping
 ```
 
 To use the dashboard:
 ```bash
-python shelf_books/dashboard.py
+python -m shelf_control.dashboard
 ```
 And open [localhost:8050](http://localhost:8050) in a web browser.
 
@@ -53,8 +53,8 @@ And open [localhost:8050](http://localhost:8050) in a web browser.
 
 * Scraping data from [Booknode](https://booknode.com)
     * Top 1000 ✓
-        * Time: 14min24s
-        * Memory: 1,7M
+        * Time: 29min23s
+        * Memory: 1,8M
     * Specific book (✓)
     * Editor
     * Person

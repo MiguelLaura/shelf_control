@@ -1,3 +1,7 @@
+# =============================================================================
+# Scraping and Dashboard Fieldnames Constants
+# =============================================================================
+#
 CATEGORIES_NAMES = [
     "diamant",
     "or",
@@ -44,16 +48,16 @@ BOOK_TOP_1000_PRESENTATION = [
     "input",
     "markdown",
     "input",
+    "markdown",
     "input",
+    "markdown",
+    "markdown",
     "input",
+    "markdown",
     "input",
+    "markdown",
     "input",
-    "input",
-    "input",
-    "input",
-    "input",
-    "input",
-    "input",
+    "markdown",
     "input",
     "input",
     "input",
@@ -124,5 +128,6 @@ BOOK_TOP_1000_COLUMNS_DASHBOARD = [
     for book_field, book_type, book_presentation in zip(
         BOOK_TOP_1000_FIELDNAMES, BOOK_TOP_1000_TYPE, BOOK_TOP_1000_PRESENTATION
     )
-    if book_field != "book_url"
+    if book_field
+    not in ["book_url", "authors_url", "themes_url", "editors_url", "collections_url"]
 ]

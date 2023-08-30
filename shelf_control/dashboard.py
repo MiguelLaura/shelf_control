@@ -5,12 +5,29 @@
 from dash import Dash, dash_table, dcc, html
 import pandas as pd
 
-from constants import BOOK_TOP_1000_COLUMNS_DASHBOARD
+from shelf_control.constants import BOOK_TOP_1000_COLUMNS_DASHBOARD
 
 df = pd.read_csv("data/top_1000.csv")
-df["cover"] = "![" + df["title"] + "](" + df["cover"] + ")"
+
+df["cover"] = "[![" + df["title"] + "](" + df["cover"] + ")](" + df["cover"] + ")"
 df["title"] = "[" + df["title"] + "](" + df["book_url"] + ")"
 df.drop("book_url", axis=1, inplace=True)
+
+df["dates"] = df["dates"].str.replace("|", "\n\n")
+df["dates_country"] = df["dates_country"].str.replace("|", "\n\n")
+
+for elements in ["themes", "authors", "editors", "collections"]:
+    df[elements] = df[elements].apply(lambda x: str(x).split("|"))
+    df[elements + "_url"] = df[elements + "_url"].apply(lambda x: str(x).split("|"))
+    df[elements] = df.apply(
+        lambda x: [
+            "[" + element + "](" + element_url + ")"
+            for element, element_url in zip(x[elements], x[elements + "_url"])
+        ],
+        axis=1,
+    )
+    df[elements] = df[elements].apply(lambda x: "\n\n".join(x))
+    df.drop(elements + "_url", axis=1, inplace=True)
 
 df_sorted_price = df.sort_values(by="price")
 
@@ -46,36 +63,26 @@ app.layout = html.Div(
                 columns=BOOK_TOP_1000_COLUMNS_DASHBOARD,
                 fixed_rows={"headers": True},
                 page_size=10,
-                style_cell={
-                    "textAlign": "center",
-                    "minWidth": 175,
-                    "overflow": "hidden",
-                    "textOverflow": "ellipsis",
-                    "maxWidth": 300,
-                },
-                style_data={
-                    "whiteSpace": "normal",
-                    "height": "220px",
-                    "lineHeight": "15px",
-                },
                 css=[
                     {
                         "selector": ".dash-spreadsheet td div",
                         "rule": """
-                            line-height: 15px;
-                            height: 220px;
                             display: block;
                             overflow-y: hidden;
                         """,
                     }
                 ],
-                style_header={
+                style_cell={
                     "textAlign": "center",
-                    "font-weight": "bold",
+                    "minWidth": 175,
+                    "maxWidth": 300,
                     "font-size": "14px",
+                    "margin-top": "245px",
                 },
-                style_table={
-                    "overflowY": "auto",
+                style_data={
+                    "whiteSpace": "normal",
+                    "height": "220px",
+                    "lineHeight": "15px",
                 },
                 style_data_conditional=[
                     {
@@ -85,6 +92,14 @@ app.layout = html.Div(
                         "textAlign": "left",
                     },
                 ],
+                style_header={
+                    "textAlign": "center",
+                    "font-weight": "bold",
+                    "font-size": "14px",
+                },
+                style_table={
+                    "overflowY": "auto",
+                },
                 tooltip_data=[
                     {
                         column: {"value": str(value), "type": "markdown"}
