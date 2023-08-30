@@ -1,6 +1,7 @@
 # Dependencies
 bs4
 dash
+dash_bootstrap_components
 pandas
 requests
 tqdm

@@ -5,11 +5,14 @@
 from dash import Dash, Input, Output, callback, dash_table, dcc, html
 import dash_bootstrap_components as dbc
 import pandas as pd
+import plotly.express as px
 
 from shelf_control.constants import BOOK_TOP_1000_COLUMNS_DASHBOARD
 
 df = pd.read_csv("data/top_1000.csv")
 
+df["initial_cover"] = df["cover"]
+df["initial_title"] = df["title"]
 df["cover"] = "[![" + df["title"] + "](" + df["cover"] + ")](" + df["cover"] + ")"
 df["title"] = "[" + df["title"] + "](" + df["book_url"] + ")"
 df.drop("book_url", axis=1, inplace=True)
@@ -19,6 +22,7 @@ df["dates_country"] = df["dates_country"].str.replace("|", "\n\n")
 
 for elements in ["themes", "authors", "editors", "collections"]:
     df[elements] = df[elements].apply(lambda x: str(x).split("|"))
+    df["initial_" + elements] = df[elements].apply(lambda x: "\n\n".join(x))
     df[elements + "_url"] = df[elements + "_url"].apply(lambda x: str(x).split("|"))
     df[elements] = df.apply(
         lambda x: [
@@ -128,6 +132,13 @@ app.layout = html.Div(
         html.Div(
             children=[
                 html.Div(
+                    dcc.Graph(
+                        figure=px.histogram(
+                            df, x="initial_authors", y="readers_count", histfunc="avg"
+                        )
+                    )
+                ),
+                html.Div(
                     children=dcc.Graph(
                         id="readers-chart",
                         config={"displayModeBar": True, "displaylogo": False},
@@ -153,7 +164,7 @@ app.layout = html.Div(
                         },
                     ),
                     className="card",
-                )
+                ),
             ],
             className="wrapper",
         ),
@@ -163,11 +174,15 @@ app.layout = html.Div(
 
 @callback(Output("table_out", "children"), Input("table", "active_cell"))
 def update_graphs(active_cell):
-    return (
-        df[active_cell["row"] : active_cell["row"] + 1][active_cell["column_id"]]
-        if active_cell
-        else "Click the table"
-    )
+    if active_cell:
+        column = (
+            "initial_" + active_cell["column_id"]
+            if "initial_" + active_cell["column_id"] in df.columns
+            else active_cell["column_id"]
+        )
+        return df[active_cell["row"] : active_cell["row"] + 1][column]
+    else:
+        return "Click the table"
 
 
 if __name__ == "__main__":
