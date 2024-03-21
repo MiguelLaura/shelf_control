@@ -31,8 +31,13 @@ def scraper_top_1000(page_nb=1):
     position = 1
     for page in tqdm(range(page_nb, 11), desc=" number of pages", position=0):
         url_books = top_1000_url + str(page)
-        res_books = requests.get(url_books)
-        # print('status_code :', r.status_code)
+        headers={'User-Agent': 'Mozilla/5.0'}
+        res_books = requests.get(url_books, headers=headers)
+
+        if res_books.status_code > 400 and res_books.status_code < 600:
+            print("\nstatus_code in top 1000:", res_books.status_code, url_books)
+            yield "error"
+
         soup_books = BeautifulSoup(res_books.text, "html.parser")
         books = soup_books.find_all("div", class_="row book")
 
@@ -45,6 +50,10 @@ def scraper_top_1000(page_nb=1):
         ):
             url_book = book.find("a", class_="main_cover_link").get("href")
             result = scraper_specific_book(url_book)
+
+            if result=="error":
+                yield result
+
             result["position"] = position
             position += 1
             yield result
@@ -62,9 +71,13 @@ def scraper_specific_book(url_book):
     Returns:
         dict: book data
     """
-    res_book = requests.get(url_book)
+    headers={'User-Agent': 'Mozilla/5.0'}
+    res_book = requests.get(url_book, headers=headers)
+
     if res_book.status_code > 400 and res_book.status_code < 600:
-        print("status_code :", res_book.status_code)
+        print("\nstatus_code in specific book:", res_book, url_book)
+        return "error"
+
     soup_book = BeautifulSoup(res_book.text, "html.parser")
 
     result = {}
@@ -193,4 +206,6 @@ if __name__ == "__main__":
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for result in scraper_top_1000():
+            if result == "error":
+                break
             writer.writerow(result)
