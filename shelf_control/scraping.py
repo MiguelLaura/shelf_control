@@ -31,7 +31,7 @@ def scraper_top_1000(page_nb=1):
     position = 1
     for page in tqdm(range(page_nb, 11), desc=" number of pages", position=0):
         url_books = top_1000_url + str(page)
-        headers={'User-Agent': 'Mozilla/5.0'}
+        headers = {"User-Agent": "Mozilla/5.0"}
         res_books = requests.get(url_books, headers=headers)
 
         if res_books.status_code > 400 and res_books.status_code < 600:
@@ -51,7 +51,7 @@ def scraper_top_1000(page_nb=1):
             url_book = book.find("a", class_="main_cover_link").get("href")
             result = scraper_specific_book(url_book)
 
-            if result=="error":
+            if result == "error":
                 yield result
 
             result["position"] = position
@@ -71,7 +71,7 @@ def scraper_specific_book(url_book):
     Returns:
         dict: book data
     """
-    headers={'User-Agent': 'Mozilla/5.0'}
+    headers = {"User-Agent": "Mozilla/5.0"}
     res_book = requests.get(url_book, headers=headers)
 
     if res_book.status_code > 400 and res_book.status_code < 600:
